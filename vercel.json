@@ -23,5 +23,14 @@
                 "service": "frontend"
             }
         }
+    ],
+    "builds": [
+        {
+            "src": "backend/package.json",
+            "use": "@vercel/node",
+            "config": {
+                "distDir": "backend/dist"
+            }
+        }
     ]
 }
