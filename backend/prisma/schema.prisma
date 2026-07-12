@@ -14,6 +14,39 @@ enum Role {
   ANALYST
 }
 
+enum VehicleStatus {
+  AVAILABLE
+  ON_TRIP
+  IN_SHOP
+  RETIRED
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_TRIP
+  SUSPENDED
+}
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ExpenseType {
+  FUEL
+  TOLL
+  PARKING
+  REPAIR
+  OTHER
+}
+
+enum TripStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -21,4 +54,90 @@ model User {
   role      Role     @default(FLEET_MANAGER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Vehicle {
+  id                 Int           @id @default(autoincrement())
+  vehicleName        String
+  registrationNumber String        @unique
+  vehicleType        String
+  capacity           Int
+  status             VehicleStatus @default(AVAILABLE)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  trips        Trip[]
+  fuelLogs     FuelLog[]
+  expenses     Expense[]
+  maintenances Maintenance[]
+}
+
+model Driver {
+  id             Int          @id @default(autoincrement())
+  name           String
+  phone          String
+  licenseNumber  String       @unique
+  licenseExpiry  DateTime
+  status         DriverStatus @default(AVAILABLE)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  trips Trip[]
+}
+
+model Trip {
+  id        Int        @id @default(autoincrement())
+  vehicleId Int
+  driverId  Int?
+  status    TripStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+  driver  Driver? @relation(fields: [driverId], references: [id])
+  fuelLogs FuelLog[]
+  expenses Expense[]
+}
+
+model Maintenance {
+  id              Int               @id @default(autoincrement())
+  vehicleId       Int
+  maintenanceType String
+  description     String?
+  cost            Float
+  status          MaintenanceStatus @default(OPEN)
+  scheduledDate   DateTime
+  completedDate   DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+model FuelLog {
+  id         Int      @id @default(autoincrement())
+  vehicleId  Int
+  tripId     Int?
+  liters     Float
+  cost       Float
+  fuelStation String?
+  filledAt   DateTime
+  createdAt  DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+  trip    Trip?   @relation(fields: [tripId], references: [id])
+}
+
+model Expense {
+  id          Int         @id @default(autoincrement())
+  vehicleId   Int
+  tripId      Int?
+  expenseType ExpenseType
+  amount      Float
+  description String?
+  expenseDate DateTime
+  createdAt   DateTime    @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+  trip    Trip?   @relation(fields: [tripId], references: [id])
 }

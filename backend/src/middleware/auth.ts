@@ -10,11 +10,16 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export const protect = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): void => {
   const header = req.header("Authorization");
 
   if (!header?.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Missing bearer token" });
+    res.status(401).json({ success: false, message: "Missing bearer token" });
+    return;
   }
 
   const token = header.slice("Bearer ".length);
@@ -27,8 +32,31 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
     };
 
     req.user = payload;
-    return next();
+    next();
   } catch {
-    return res.status(401).json({ message: "Invalid or expired token" });
+    res.status(401).json({ success: false, message: "Invalid or expired token" });
   }
-}
+};
+
+export const authorize = (allowedRoles: string[]) => {
+  return (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ): void => {
+    const userRole = req.user?.role;
+
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      res.status(403).json({
+        success: false,
+        message: "Forbidden: insufficient permissions",
+      });
+      return;
+    }
+
+    next();
+  };
+};
+
+// Alias for backward compatibility
+export { protect as requireAuth };
