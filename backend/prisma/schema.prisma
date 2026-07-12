@@ -42,6 +42,8 @@ enum ExpenseType {
 }
 
 enum TripStatus {
+  DRAFT
+  DISPATCHED
   ACTIVE
   COMPLETED
   CANCELLED
@@ -73,28 +75,36 @@ model Vehicle {
 }
 
 model Driver {
-  id             Int          @id @default(autoincrement())
-  name           String
-  phone          String
-  licenseNumber  String       @unique
-  licenseExpiry  DateTime
-  status         DriverStatus @default(AVAILABLE)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id            Int          @id @default(autoincrement())
+  name          String
+  phone         String
+  licenseNumber String       @unique
+  licenseExpiry DateTime
+  status        DriverStatus @default(AVAILABLE)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   trips Trip[]
 }
 
 model Trip {
-  id        Int        @id @default(autoincrement())
-  vehicleId Int
-  driverId  Int?
-  status    TripStatus @default(ACTIVE)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id           Int        @id @default(autoincrement())
+  vehicleId    Int
+  driverId     Int        // ❗ make required
 
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
-  driver  Driver? @relation(fields: [driverId], references: [id])
+  cargoWeight  Int        // ❗ YOU NEED THIS
+  distance     Int?       // optional
+
+  status       TripStatus @default(DRAFT) // ❗ fix default
+
+  startTime    DateTime?
+  endTime      DateTime?
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  vehicle  Vehicle   @relation(fields: [vehicleId], references: [id])
+  driver   Driver    @relation(fields: [driverId], references: [id])
   fuelLogs FuelLog[]
   expenses Expense[]
 }
@@ -115,14 +125,14 @@ model Maintenance {
 }
 
 model FuelLog {
-  id         Int      @id @default(autoincrement())
-  vehicleId  Int
-  tripId     Int?
-  liters     Float
-  cost       Float
+  id          Int      @id @default(autoincrement())
+  vehicleId   Int
+  tripId      Int?
+  liters      Float
+  cost        Float
   fuelStation String?
-  filledAt   DateTime
-  createdAt  DateTime @default(now())
+  filledAt    DateTime
+  createdAt   DateTime @default(now())
 
   vehicle Vehicle @relation(fields: [vehicleId], references: [id])
   trip    Trip?   @relation(fields: [tripId], references: [id])
