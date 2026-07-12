@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authRouter } from "./auth.routes";
-import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
+import { protect } from "../middleware/auth";
 
 export const router = Router();
 
@@ -10,7 +10,6 @@ router.get("/health", (_req, res) => {
 
 router.use("/auth", authRouter);
 
-router.get("/me", requireAuth, (req, res) => {
-  const authReq = req as AuthenticatedRequest;
-  res.json({ user: authReq.user ?? null });
+router.get("/me", protect, (req, res) => {
+  res.json({ user: req.user ?? null });
 });
