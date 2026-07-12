@@ -1,9 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { clearUser } from "@/store/slices/authSlice";
+import { session } from "@/services/session";
 
 export function TopBar() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+
+  const handleSignOut = () => {
+    session.signOut();
+    dispatch(clearUser());
+    router.push("/");
+  };
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-[#262626] bg-[#0a0a0a] px-6">
@@ -16,13 +27,15 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-4">
-        <span className="text-sm font-medium text-white">Ravija K.</span>
+        <span className="text-sm font-medium text-white">
+          {user?.name ?? "Ravija K."}
+        </span>
         <div className="flex items-center gap-2">
           <span className="rounded-md bg-[#1f2937] px-2.5 py-1 text-xs font-medium text-[#d1d5db]">
-            Dispatcher
+            {user?.role ?? "Dispatcher"}
           </span>
           <button
-            onClick={() => router.push("/")}
+            onClick={handleSignOut}
             className="rounded-full bg-[#374151] p-1.5 text-xs text-white hover:bg-[#4b5563]"
             title="Sign out"
           >

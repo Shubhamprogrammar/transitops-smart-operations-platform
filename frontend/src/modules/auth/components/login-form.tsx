@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAppDispatch } from "@/store/hooks";
+import { setUser } from "@/store/slices/authSlice";
 import { useLogin } from "../hooks/useLogin";
 
 const ROLES = [
@@ -20,6 +22,7 @@ const ROLE_ACCESS: Record<string, string> = {
 
 export function LoginForm() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const { mutateAsync, isPending } = useLogin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +35,8 @@ export function LoginForm() {
     setError(null);
 
     try {
-      await mutateAsync({ email, password, role });
+      const response = await mutateAsync({ email, password, role });
+      dispatch(setUser(response.user));
       if (rememberMe) {
         // TODO: persist remember-me preference if needed.
       }
