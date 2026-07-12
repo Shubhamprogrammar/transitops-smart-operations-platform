@@ -3,7 +3,7 @@ import { Response } from "express";
 import { env } from "../config/env";
 
 export const generateToken = (id: number, role: string): string => {
-  return jwt.sign({ userId: id, role }, env.jwtSecret, {
+  return jwt.sign({ id, role }, env.jwtSecret, {
     expiresIn: "15d",
   });
 };

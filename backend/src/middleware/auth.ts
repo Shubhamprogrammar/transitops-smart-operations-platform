@@ -1,34 +1,38 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    email?: string;
-    role?: string;
-  };
+interface JwtPayload {
+  id: number;
+  role: string;
 }
 
-export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const header = req.header("Authorization");
+export const protect = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  const header = req.headers.authorization;
+  const cookieToken = req.cookies?.token;
 
-  if (!header?.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Missing bearer token" });
+  let token: string | undefined;
+
+  if (header?.startsWith("Bearer ")) {
+    token = header.slice(7);
+  } else if (cookieToken) {
+    token = cookieToken;
   }
 
-  const token = header.slice("Bearer ".length);
+  if (!token) {
+    res.status(401).json({ message: "Not authenticated. Please log in." });
+    return;
+  }
 
   try {
-    const payload = jwt.verify(token, env.jwtSecret) as {
-      userId: string;
-      email?: string;
-      role?: string;
-    };
-
-    req.user = payload;
-    return next();
+    const decoded = jwt.verify(token, env.jwtSecret) as JwtPayload;
+    req.user = { id: decoded.id, role: decoded.role };
+    next();
   } catch {
-    return res.status(401).json({ message: "Invalid or expired token" });
+    res.status(401).json({ message: "Invalid or expired token." });
   }
-}
+};
