@@ -4,46 +4,53 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { setUser } from "@/store/slices/authSlice";
-import { useLogin } from "../hooks/useLogin";
-
-interface LoginFormProps {
-  onSwitchToRegister?: () => void;
-}
+import { useRegister } from "../hooks/useRegister";
 
 const ROLES = [
-  { value: "fleet-manager", label: "Fleet Manager" },
-  { value: "dispatcher", label: "Dispatcher" },
-  { value: "safety-officer", label: "Safety Officer" },
-  { value: "financial-analyst", label: "Financial Analyst" },
+  { value: "FLEET_MANAGER", label: "Fleet Manager" },
+  { value: "DRIVER", label: "Driver" },
+  { value: "SAFETY_OFFICER", label: "Safety Officer" },
+  { value: "ANALYST", label: "Analyst" },
 ];
 
 const ROLE_ACCESS: Record<string, string> = {
-  "fleet-manager": "Fleet, Maintenance",
-  dispatcher: "Dispatch, Trips",
-  "safety-officer": "Safety, Compliance",
-  "financial-analyst": "Fuel & Expenses, Analytics",
+  FLEET_MANAGER: "Fleet, Maintenance",
+  DRIVER: "Dispatch, Trips",
+  SAFETY_OFFICER: "Safety, Compliance",
+  ANALYST: "Fuel & Expenses, Analytics",
 };
 
-export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
+interface RegisterFormProps {
+  onSwitchToLogin: () => void;
+}
+
+export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { mutateAsync, isPending } = useLogin();
+  const { mutateAsync, isPending } = useRegister();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("dispatcher");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("FLEET_MANAGER");
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     try {
       const response = await mutateAsync({ email, password, role });
       dispatch(setUser(response.user));
-      if (rememberMe) {
-        // TODO: persist remember-me preference if needed.
-      }
       router.push("/dashboard");
     } catch (err) {
       const message =
@@ -80,7 +87,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
         <div className="my-10 md:my-0">
           <h2 className="mb-4 text-lg font-semibold text-[#111827]">
-            One login. Four roles:
+            One account. Four roles:
           </h2>
           <ul className="space-y-2 text-sm font-medium text-[#374151]">
             {ROLES.map((r) => (
@@ -93,7 +100,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         </div>
 
         <p className="text-[10px] font-semibold uppercase tracking-wider text-[#6b7280]">
-          TransitOps © 2026 — Heart Rail
+          TransitOps &copy; 2026 &mdash; Heart Rail
         </p>
       </section>
 
@@ -102,23 +109,23 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         <div className="w-full max-w-md">
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-white">
-              Sign in to your account
+              Create your account
             </h2>
             <p className="mt-1 text-sm text-[#9ca3af]">
-              Enter your credentials to continue
+              Fill in the details to get started
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
-                htmlFor="email"
+                htmlFor="reg-email"
                 className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#9ca3af]"
               >
                 Email
               </label>
               <input
-                id="email"
+                id="reg-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -130,17 +137,36 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
             <div>
               <label
-                htmlFor="password"
+                htmlFor="reg-password"
                 className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#9ca3af]"
               >
                 Password
               </label>
               <input
-                id="password"
+                id="reg-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Min. 6 characters"
+                className="w-full rounded-md border border-[#374151] bg-[#111827] px-3 py-2.5 text-sm text-white placeholder-[#6b7280] outline-none ring-[#d97706] transition focus:border-[#d97706] focus:ring-1"
+                required
+                minLength={6}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="reg-confirm-password"
+                className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#9ca3af]"
+              >
+                Confirm Password
+              </label>
+              <input
+                id="reg-confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter your password"
                 className="w-full rounded-md border border-[#374151] bg-[#111827] px-3 py-2.5 text-sm text-white placeholder-[#6b7280] outline-none ring-[#d97706] transition focus:border-[#d97706] focus:ring-1"
                 required
               />
@@ -148,14 +174,14 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
             <div>
               <label
-                htmlFor="role"
+                htmlFor="reg-role"
                 className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#9ca3af]"
               >
                 Role
               </label>
               <div className="relative">
                 <select
-                  id="role"
+                  id="reg-role"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full appearance-none rounded-md border border-[#374151] bg-[#111827] px-3 py-2.5 text-sm text-white outline-none ring-[#d97706] transition focus:border-[#d97706] focus:ring-1"
@@ -172,59 +198,41 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 text-sm text-[#d1d5db]">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-[#4b5563] bg-[#111827] text-[#d97706] focus:ring-[#d97706]"
-                />
-                Remember me
-              </label>
-              <button
-                type="button"
-                className="text-sm font-medium text-[#d1d5db] underline-offset-2 hover:text-white hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
-
             <button
               type="submit"
               disabled={isPending}
               className="mt-2 w-full rounded-md bg-[#b45309] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#92400e] focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:ring-offset-2 focus:ring-offset-[#0a0a0a] disabled:opacity-60"
             >
-              {isPending ? "Signing in…" : "Sign In"}
+              {isPending ? "Creating account&hellip;" : "Create Account"}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-[#9ca3af]">
-              Don&apos;t have an account?{" "}
+              Already have an account?{" "}
               <button
                 type="button"
-                onClick={() => onSwitchToRegister?.()}
+                onClick={onSwitchToLogin}
                 className="font-medium text-[#d97706] underline-offset-2 transition hover:text-[#f59e0b] hover:underline"
               >
-                Create one
+                Sign in
               </button>
             </p>
           </div>
 
           <div className="mt-8 border-t border-[#262626] pt-6">
             <p className="mb-3 text-xs text-[#9ca3af]">
-              Access is scoped by role after login:
+              Access is scoped by role after registration:
             </p>
             <ul className="space-y-1.5 text-xs text-[#9ca3af]">
               {ROLES.map((r) => (
                 <li key={r.value} className="flex gap-2">
-                  <span className="text-[#6b7280]">•</span>
+                  <span className="text-[#6b7280]">&bull;</span>
                   <span>
                     <span className="font-medium text-[#d1d5db]">
                       {r.label}
                     </span>{" "}
-                    — {ROLE_ACCESS[r.value]}
+                    &mdash; {ROLE_ACCESS[r.value]}
                   </span>
                 </li>
               ))}
@@ -236,12 +244,12 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         {error && (
           <div className="absolute right-4 top-4 max-w-xs rounded-lg border border-dashed border-[#ef4444] bg-[#1a0505] px-4 py-3 shadow-lg md:right-8 md:top-8">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#ef4444]">
-              Error state
+              Error
             </p>
             <ul className="space-y-1 text-sm text-[#fca5a5]">
               {error.split("\n").map((line, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span className="mt-0.5 text-xs">✕</span>
+                  <span className="mt-0.5 text-xs">&times;</span>
                   {line}
                 </li>
               ))}

@@ -90,12 +90,14 @@ model Driver {
 model Trip {
   id           Int        @id @default(autoincrement())
   vehicleId    Int
-  driverId     Int        // ❗ make required
+  driverId     Int
 
-  cargoWeight  Int        // ❗ YOU NEED THIS
-  distance     Int?       // optional
+  source       String
+  destination  String
+  cargoWeight  Int
+  distance     Int?
 
-  status       TripStatus @default(DRAFT) // ❗ fix default
+  status       TripStatus @default(DRAFT)
 
   startTime    DateTime?
   endTime      DateTime?

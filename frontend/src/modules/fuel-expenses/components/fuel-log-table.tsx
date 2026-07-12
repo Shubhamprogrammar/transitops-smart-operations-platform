@@ -3,16 +3,20 @@ import type { FuelLog } from "@/types/fuel-expenses";
 interface FuelLogTableProps {
   logs: FuelLog[];
   isLoading: boolean;
+  onAddFuel?: () => void;
 }
 
-export function FuelLogTable({ logs, isLoading }: FuelLogTableProps) {
+export function FuelLogTable({ logs, isLoading, onAddFuel }: FuelLogTableProps) {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-[#9ca3af]">
           Fuel Logs
         </h3>
-        <button className="rounded-md bg-[#b45309] px-3 py-1 text-[10px] font-semibold text-white transition hover:bg-[#92400e]">
+        <button
+          onClick={onAddFuel}
+          className="rounded-md bg-[#b45309] px-3 py-1 text-[10px] font-semibold text-white transition hover:bg-[#92400e]"
+        >
           + Log Fuel
         </button>
       </div>

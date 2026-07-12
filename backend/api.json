@@ -1,0 +1,536 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TransitOps — Smart Transport Operations Platform API",
+    "version": "1.0.0",
+    "description": "REST API for fleet management, trip dispatch, driver management, vehicle tracking, maintenance, fuel logs, expenses, and analytics."
+  },
+  "servers": [
+    { "url": "http://localhost:3001/api", "description": "Local development" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "tags": ["System"],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "example": "ok" } } } } } }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "tags": ["Auth"],
+        "requestBody": { "content": { "application/json": { "schema": { "type": "object", "required": ["email", "password"], "properties": { "email": { "type": "string", "format": "email" }, "password": { "type": "string", "minLength": 6 }, "role": { "type": "string", "enum": ["FLEET_MANAGER", "DRIVER", "SAFETY_OFFICER", "ANALYST"] } } } } } },
+        "responses": {
+          "201": { "description": "User registered" },
+          "409": { "description": "Email already exists" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login",
+        "tags": ["Auth"],
+        "requestBody": { "content": { "application/json": { "schema": { "type": "object", "required": ["email", "password"], "properties": { "email": { "type": "string" }, "password": { "type": "string" } } } } } },
+        "responses": {
+          "200": { "description": "Login successful, returns token and user" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "summary": "Get current user",
+        "tags": ["Auth"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Current user data" } }
+      }
+    },
+    "/dashboard/summary": {
+      "get": {
+        "summary": "Dashboard summary stats",
+        "tags": ["Dashboard"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Summary data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalVehicles": { "type": "integer" },
+                    "totalDrivers": { "type": "integer" },
+                    "activeTrips": { "type": "integer" },
+                    "availableVehicles": { "type": "integer" },
+                    "vehiclesInShop": { "type": "integer" },
+                    "totalFuelCost": { "type": "number" },
+                    "totalExpenses": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/vehicle-status": {
+      "get": {
+        "summary": "Vehicle status distribution",
+        "tags": ["Dashboard"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Array of { status, count }",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object", "properties": { "status": { "type": "string" }, "count": { "type": "integer" } } } } } }
+          }
+        }
+      }
+    },
+    "/dashboard/trip-status": {
+      "get": {
+        "summary": "Trip status distribution",
+        "tags": ["Dashboard"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Array of { status, count }" } }
+      }
+    },
+    "/dashboard/expenses": {
+      "get": {
+        "summary": "Expenses grouped by type",
+        "tags": ["Dashboard"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Array of { expenseType, totalAmount }" } }
+      }
+    },
+    "/dashboard/fuel": {
+      "get": {
+        "summary": "Fuel summary",
+        "tags": ["Dashboard"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Fuel cost and liter aggregates" } }
+      }
+    },
+    "/vehicles": {
+      "get": {
+        "summary": "List all vehicles",
+        "tags": ["Fleet"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Array of vehicles with relations" } }
+      },
+      "post": {
+        "summary": "Create a vehicle",
+        "tags": ["Fleet"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["vehicleName", "registrationNumber", "vehicleType", "capacity"],
+                "properties": {
+                  "vehicleName": { "type": "string", "example": "VAN-05" },
+                  "registrationNumber": { "type": "string", "example": "GJ01AB1234" },
+                  "vehicleType": { "type": "string", "example": "Van" },
+                  "capacity": { "type": "integer", "example": 500 },
+                  "status": { "type": "string", "enum": ["AVAILABLE", "ON_TRIP", "IN_SHOP", "RETIRED"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Vehicle created" },
+          "409": { "description": "Registration number already exists" }
+        }
+      }
+    },
+    "/vehicles/{id}": {
+      "get": {
+        "summary": "Get vehicle by ID",
+        "tags": ["Fleet"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Vehicle data" } }
+      },
+      "patch": {
+        "summary": "Update vehicle",
+        "tags": ["Fleet"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Updated vehicle" } }
+      },
+      "delete": {
+        "summary": "Delete vehicle",
+        "tags": ["Fleet"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Deleted" },
+          "400": { "description": "Vehicle has active trips" }
+        }
+      }
+    },
+    "/vehicles/{id}/status": {
+      "patch": {
+        "summary": "Update vehicle status",
+        "tags": ["Fleet"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["AVAILABLE", "ON_TRIP", "IN_SHOP", "RETIRED"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Status updated" } }
+      }
+    },
+    "/drivers": {
+      "get": {
+        "summary": "List all drivers",
+        "tags": ["Drivers"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Array of drivers with trips" } }
+      },
+      "post": {
+        "summary": "Create a driver",
+        "tags": ["Drivers"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "phone", "licenseNumber", "licenseExpiry"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "licenseNumber": { "type": "string" },
+                  "licenseExpiry": { "type": "string", "format": "date" },
+                  "status": { "type": "string", "enum": ["AVAILABLE", "ON_TRIP", "SUSPENDED"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Driver created" },
+          "409": { "description": "License number already exists" }
+        }
+      }
+    },
+    "/drivers/{id}": {
+      "get": {
+        "summary": "Get driver by ID",
+        "tags": ["Drivers"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Driver data" } }
+      },
+      "patch": {
+        "summary": "Update driver",
+        "tags": ["Drivers"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Updated driver" } }
+      },
+      "delete": {
+        "summary": "Delete driver",
+        "tags": ["Drivers"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Deleted" },
+          "400": { "description": "Driver has active trips" }
+        }
+      }
+    },
+    "/drivers/{id}/status": {
+      "patch": {
+        "summary": "Update driver status",
+        "tags": ["Drivers"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["AVAILABLE", "ON_TRIP", "SUSPENDED"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Status updated" } }
+      }
+    },
+    "/trips": {
+      "get": {
+        "summary": "List all trips",
+        "tags": ["Trips"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Array of trips with vehicle and driver relations" } }
+      },
+      "post": {
+        "summary": "Create a trip",
+        "tags": ["Trips"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["vehicleId", "driverId", "source", "destination", "cargoWeight"],
+                "properties": {
+                  "vehicleId": { "type": "integer" },
+                  "driverId": { "type": "integer" },
+                  "source": { "type": "string" },
+                  "destination": { "type": "string" },
+                  "cargoWeight": { "type": "integer" },
+                  "distance": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Trip created; vehicle & driver set to ON_TRIP" },
+          "400": { "description": "Validation error (capacity, availability, etc.)" },
+          "404": { "description": "Vehicle or driver not found" }
+        }
+      }
+    },
+    "/trips/{id}": {
+      "get": {
+        "summary": "Get trip by ID",
+        "tags": ["Trips"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Trip data" } }
+      }
+    },
+    "/trips/{id}/status": {
+      "patch": {
+        "summary": "Update trip status",
+        "tags": ["Trips"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["DRAFT", "DISPATCHED", "ACTIVE", "COMPLETED", "CANCELLED"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status updated. COMPLETED/CANCELLED also restores vehicle/driver to AVAILABLE" }
+        }
+      }
+    },
+    "/maintenance": {
+      "get": {
+        "summary": "List all maintenance records",
+        "tags": ["Maintenance"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Array of maintenance records with vehicle" } }
+      },
+      "post": {
+        "summary": "Create a maintenance record",
+        "tags": ["Maintenance"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["vehicleId", "maintenanceType", "cost", "scheduledDate"],
+                "properties": {
+                  "vehicleId": { "type": "integer" },
+                  "maintenanceType": { "type": "string" },
+                  "description": { "type": "string" },
+                  "cost": { "type": "number" },
+                  "scheduledDate": { "type": "string", "format": "date" },
+                  "completedDate": { "type": "string", "format": "date", "nullable": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Maintenance created; vehicle set to IN_SHOP" },
+          "409": { "description": "Vehicle already has an open maintenance record" }
+        }
+      }
+    },
+    "/maintenance/{id}": {
+      "get": {
+        "summary": "Get maintenance record by ID",
+        "tags": ["Maintenance"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Maintenance record" } }
+      },
+      "patch": {
+        "summary": "Update maintenance record",
+        "tags": ["Maintenance"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Updated record" } }
+      },
+      "delete": {
+        "summary": "Delete maintenance record",
+        "tags": ["Maintenance"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Deleted. If OPEN, vehicle returned to AVAILABLE" } }
+      }
+    },
+    "/maintenance/{id}/complete": {
+      "patch": {
+        "summary": "Mark maintenance as completed",
+        "tags": ["Maintenance"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Completed. Vehicle status set to AVAILABLE" },
+          "400": { "description": "Already completed or vehicle not in shop" }
+        }
+      }
+    },
+    "/fuel-logs": {
+      "get": {
+        "summary": "List all fuel logs",
+        "tags": ["Fuel"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Array of fuel logs with vehicle and trip" } }
+      },
+      "post": {
+        "summary": "Create a fuel log entry",
+        "tags": ["Fuel"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["vehicleId", "liters", "cost", "filledAt"],
+                "properties": {
+                  "vehicleId": { "type": "integer" },
+                  "tripId": { "type": "integer", "nullable": true },
+                  "liters": { "type": "number" },
+                  "cost": { "type": "number" },
+                  "fuelStation": { "type": "string" },
+                  "filledAt": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Fuel log created" } }
+      }
+    },
+    "/fuel-logs/{id}": {
+      "get": { "summary": "Get fuel log by ID", "tags": ["Fuel"], "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Fuel log" } } },
+      "patch": { "summary": "Update fuel log", "tags": ["Fuel"], "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Updated fuel log" } } },
+      "delete": { "summary": "Delete fuel log", "tags": ["Fuel"], "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Deleted" } } }
+    },
+    "/expenses": {
+      "get": {
+        "summary": "List all expenses",
+        "tags": ["Expenses"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Array of expenses with vehicle and trip" } }
+      },
+      "post": {
+        "summary": "Create an expense",
+        "tags": ["Expenses"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["vehicleId", "expenseType", "amount", "expenseDate"],
+                "properties": {
+                  "vehicleId": { "type": "integer" },
+                  "tripId": { "type": "integer", "nullable": true },
+                  "expenseType": { "type": "string", "enum": ["FUEL", "TOLL", "PARKING", "REPAIR", "OTHER"] },
+                  "amount": { "type": "number" },
+                  "description": { "type": "string" },
+                  "expenseDate": { "type": "string", "format": "date" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Expense created" } }
+      }
+    },
+    "/expenses/{id}": {
+      "get": { "summary": "Get expense by ID", "tags": ["Expenses"], "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Expense" } } },
+      "patch": { "summary": "Update expense", "tags": ["Expenses"], "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Updated expense" } } },
+      "delete": { "summary": "Delete expense", "tags": ["Expenses"], "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Deleted" } } }
+    },
+    "/analytics": {
+      "get": {
+        "summary": "Get analytics data",
+        "tags": ["Analytics"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Analytics including stats, monthly revenue, costliest vehicles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stats": {
+                      "type": "object",
+                      "properties": {
+                        "fuelEfficiency": { "type": "string" },
+                        "fleetUtilization": { "type": "string" },
+                        "operationalCost": { "type": "string" },
+                        "vehicleRoi": { "type": "string" }
+                      }
+                    },
+                    "roiFormula": { "type": "string" },
+                    "monthlyRevenue": { "type": "array", "items": { "type": "object", "properties": { "month": { "type": "string" }, "amount": { "type": "number" } } } },
+                    "topCostliestVehicles": { "type": "array", "items": { "type": "object", "properties": { "vehicle": { "type": "string" }, "cost": { "type": "number" }, "color": { "type": "string" } } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

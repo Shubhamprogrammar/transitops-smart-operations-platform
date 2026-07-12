@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from "express";
-import { createTripSchema, CreateTripInput } from "../validators/trip.validator";
-import { createTrip } from "../services/trip.service";
-
-const VALIDATION_ERRORS: Record<string, number> = {
-  "Vehicle not found": 404,
-  "Driver not found": 404,
-  "Vehicle not available": 400,
-  "Driver not available": 400,
-  "Driver license expired": 400,
-  "Cargo exceeds vehicle capacity": 400,
-};
+import { sendSuccess } from "../helpers/response";
+import { validateRequest } from "../helpers/validation";
+import {
+  createTripSchema,
+  updateTripStatusSchema,
+} from "../validators/trip.validator";
+import {
+  createTrip,
+  getAllTrips,
+  getTripById,
+  updateTripStatus,
+} from "../services/trip.service";
 
 export const createTripHandler = async (
   req: Request,
@@ -27,21 +28,53 @@ export const createTripHandler = async (
       return;
     }
 
-    const data: CreateTripInput = parsed.data;
-    const trip = await createTrip(data);
-
-    res.status(201).json({
-      message: "Trip created successfully",
-      trip,
-    });
+    const trip = await createTrip(parsed.data);
+    sendSuccess(res, trip, "Trip created successfully", 201);
   } catch (error) {
-    if (error instanceof Error) {
-      const status = VALIDATION_ERRORS[error.message];
-      if (status) {
-        res.status(status).json({ message: error.message });
-        return;
-      }
-    }
+    next(error);
+  }
+};
+
+export const getAllTripsHandler = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const trips = await getAllTrips();
+    sendSuccess(res, trips, "Trips fetched successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getTripByIdHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const id = Number(req.params.id);
+    const trip = await getTripById(id);
+    sendSuccess(res, trip, "Trip fetched successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateTripStatusHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const id = Number(req.params.id);
+    const data = validateRequest(updateTripStatusSchema, req.body, res);
+    if (!data) return;
+
+    const trip = await updateTripStatus(id, data);
+    sendSuccess(res, trip, "Trip status updated successfully");
+  } catch (error) {
     next(error);
   }
 };
