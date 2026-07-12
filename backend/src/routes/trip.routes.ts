@@ -3,14 +3,26 @@ import { protect } from "../middleware/auth";
 import { authorize } from "../middleware/rbac";
 import {
   createTripHandler,
+  dispatchTripHandler,
+  completeTripHandler,
+  cancelTripHandler,
   getAllTripsHandler,
   getTripByIdHandler,
-  updateTripStatusHandler,
 } from "../controllers/trip.controller";
 
 export const tripRouter = Router();
 
-tripRouter.get("/", protect, authorize(["FLEET_MANAGER", "DRIVER", "SAFETY_OFFICER", "ANALYST"]), getAllTripsHandler);
-tripRouter.get("/:id", protect, authorize(["FLEET_MANAGER", "DRIVER", "SAFETY_OFFICER", "ANALYST"]), getTripByIdHandler);
-tripRouter.post("/", protect, authorize(["FLEET_MANAGER"]), createTripHandler);
-tripRouter.patch("/:id/status", protect, authorize(["FLEET_MANAGER"]), updateTripStatusHandler);
+// All routes require authentication
+tripRouter.use(protect);
+
+// Create
+tripRouter.post("/", authorize(["FLEET_MANAGER"]), createTripHandler);
+
+// Read
+tripRouter.get("/", authorize(["FLEET_MANAGER", "ANALYST"]), getAllTripsHandler);
+tripRouter.get("/:id", authorize(["FLEET_MANAGER", "ANALYST"]), getTripByIdHandler);
+
+// Update (State transitions)
+tripRouter.patch("/:id/dispatch", authorize(["FLEET_MANAGER"]), dispatchTripHandler);
+tripRouter.patch("/:id/complete", authorize(["FLEET_MANAGER"]), completeTripHandler);
+tripRouter.patch("/:id/cancel", authorize(["FLEET_MANAGER"]), cancelTripHandler);

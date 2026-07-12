@@ -14,6 +14,8 @@ function isValidLicenseExpiry(val: string): boolean {
 }
 
 export const createDriverSchema = z.object({
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   name: z.string().min(1, "Driver name is required"),
   phone: z.string().min(1, "Phone number is required"),
   licenseNumber: z.string().min(1, "License number is required"),
@@ -24,6 +26,7 @@ export const createDriverSchema = z.object({
 });
 
 export const updateDriverSchema = z.object({
+  email: z.string().email("Valid email is required").optional(),
   name: z.string().min(1).optional(),
   phone: z.string().min(1).optional(),
   licenseNumber: z.string().min(1).optional(),

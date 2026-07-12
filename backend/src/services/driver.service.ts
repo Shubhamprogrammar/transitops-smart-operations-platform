@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { prisma } from "../config/prisma";
 import { AppError } from "../helpers/errors";
 import { CreateDriverInput, UpdateDriverInput } from "../validators/driver.validator";
@@ -8,18 +9,33 @@ const DRIVER_INCLUDE = {
 } as const;
 
 export const createDriver = async (data: CreateDriverInput) => {
-  const existing = await prisma.driver.findUnique({
+  const existingByEmail = await prisma.driver.findUnique({
+    where: { email: data.email },
+  });
+
+  if (existingByEmail) {
+    throw new AppError("Driver with this email already exists", 409);
+  }
+
+  const existingByLicense = await prisma.driver.findUnique({
     where: { licenseNumber: data.licenseNumber },
   });
 
-  if (existing) {
+  if (existingByLicense) {
     throw new AppError("Driver with this license number already exists", 409);
   }
 
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+
   const driver = await prisma.driver.create({
     data: {
-      ...data,
+      email: data.email,
+      password: hashedPassword,
+      name: data.name,
+      phone: data.phone,
+      licenseNumber: data.licenseNumber,
       licenseExpiry: new Date(data.licenseExpiry),
+      status: data.status,
     },
   });
 

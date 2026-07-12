@@ -13,6 +13,8 @@ const TRIP_INCLUDE = {
   expenses: true,
 } as const;
 
+// ─── Create Trip ────────────────────────────────────────────────────────
+
 export const createTrip = async (data: CreateTripInput) => {
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: data.vehicleId },
@@ -38,9 +40,8 @@ export const createTrip = async (data: CreateTripInput) => {
     throw new AppError("Driver not available", 400);
   }
 
-  const expiryDate = new Date(driver.licenseExpiry);
-  if (expiryDate < new Date()) {
-    throw new AppError("Driver license expired", 400);
+  if (new Date(driver.licenseExpiry) < new Date()) {
+    throw new Error("Driver license expired");
   }
 
   if (data.cargoWeight > vehicle.capacity) {
@@ -74,60 +75,153 @@ export const createTrip = async (data: CreateTripInput) => {
   return trip;
 };
 
+// ─── Dispatch Trip ──────────────────────────────────────────────────────
+
+export const dispatchTrip = async (tripId: number) => {
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    include: { vehicle: true, driver: true },
+  });
+
+  if (!trip) {
+    throw new Error("Trip not found");
+  }
+
+  if (trip.status !== "DRAFT") {
+    throw new Error("Only draft trips can be dispatched");
+  }
+
+  if (trip.vehicle.status !== "AVAILABLE") {
+    throw new Error("Vehicle not available");
+  }
+
+  if (trip.driver.status !== "AVAILABLE") {
+    throw new Error("Driver not available");
+  }
+
+  if (new Date(trip.driver.licenseExpiry) < new Date()) {
+    throw new Error("Driver license expired");
+  }
+
+  const [updatedTrip] = await prisma.$transaction([
+    prisma.trip.update({
+      where: { id: tripId },
+      data: { status: "DISPATCHED", startTime: new Date() },
+      include: { vehicle: true, driver: true },
+    }),
+    prisma.vehicle.update({
+      where: { id: trip.vehicleId },
+      data: { status: "ON_TRIP" },
+    }),
+    prisma.driver.update({
+      where: { id: trip.driverId },
+      data: { status: "ON_TRIP" },
+    }),
+  ]);
+
+  return updatedTrip;
+};
+
+// ─── Complete Trip ──────────────────────────────────────────────────────
+
+export const completeTrip = async (tripId: number) => {
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    include: { vehicle: true, driver: true },
+  });
+
+  if (!trip) {
+    throw new Error("Trip not found");
+  }
+
+  if (trip.status !== "DISPATCHED" && trip.status !== "ACTIVE") {
+    throw new Error("Only dispatched or active trips can be completed");
+  }
+
+  const [updatedTrip] = await prisma.$transaction([
+    prisma.trip.update({
+      where: { id: tripId },
+      data: { status: "COMPLETED", endTime: new Date() },
+      include: { vehicle: true, driver: true },
+    }),
+    prisma.vehicle.update({
+      where: { id: trip.vehicleId },
+      data: { status: "AVAILABLE" },
+    }),
+    prisma.driver.update({
+      where: { id: trip.driverId },
+      data: { status: "AVAILABLE" },
+    }),
+  ]);
+
+  return updatedTrip;
+};
+
+// ─── Cancel Trip ────────────────────────────────────────────────────────
+
+export const cancelTrip = async (tripId: number) => {
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    include: { vehicle: true, driver: true },
+  });
+
+  if (!trip) {
+    throw new Error("Trip not found");
+  }
+
+  if (trip.status === "COMPLETED") {
+    throw new Error("Completed trips cannot be cancelled");
+  }
+
+  const wasDispatchedOrActive =
+    trip.status === "DISPATCHED" || trip.status === "ACTIVE";
+
+  const updateTrip = prisma.trip.update({
+    where: { id: tripId },
+    data: { status: "CANCELLED" },
+    include: { vehicle: true, driver: true },
+  });
+
+  if (wasDispatchedOrActive) {
+    const [updatedTrip] = await prisma.$transaction([
+      updateTrip,
+      prisma.vehicle.update({
+        where: { id: trip.vehicleId },
+        data: { status: "AVAILABLE" },
+      }),
+      prisma.driver.update({
+        where: { id: trip.driverId },
+        data: { status: "AVAILABLE" },
+      }),
+    ]);
+    return updatedTrip;
+  }
+
+  return updateTrip;
+};
+
+// ─── Get All Trips ──────────────────────────────────────────────────────
+
 export const getAllTrips = async () => {
   const trips = await prisma.trip.findMany({
+    include: { vehicle: true, driver: true },
     orderBy: { createdAt: "desc" },
-    include: TRIP_INCLUDE,
   });
+
   return trips;
 };
 
-export const getTripById = async (id: number) => {
+// ─── Get Single Trip ────────────────────────────────────────────────────
+
+export const getTripById = async (tripId: number) => {
   const trip = await prisma.trip.findUnique({
-    where: { id },
-    include: TRIP_INCLUDE,
+    where: { id: tripId },
+    include: { vehicle: true, driver: true },
   });
 
   if (!trip) {
-    throw new AppError("Trip not found", 404);
+    throw new Error("Trip not found");
   }
 
   return trip;
-};
-
-export const updateTripStatus = async (
-  id: number,
-  statusInput: UpdateTripStatusInput,
-) => {
-  const trip = await prisma.trip.findUnique({ where: { id } });
-
-  if (!trip) {
-    throw new AppError("Trip not found", 404);
-  }
-
-  const newStatus = statusInput.status as TripStatus;
-
-  // If trip is being completed, update vehicle/driver status back to available
-  if (newStatus === "COMPLETED" || newStatus === "CANCELLED") {
-    await prisma.vehicle.update({
-      where: { id: trip.vehicleId },
-      data: { status: "AVAILABLE" },
-    });
-    await prisma.driver.update({
-      where: { id: trip.driverId },
-      data: { status: "AVAILABLE" },
-    });
-  }
-
-  const updated = await prisma.trip.update({
-    where: { id },
-    data: {
-      status: newStatus,
-      ...(newStatus === "ACTIVE" ? { startTime: new Date() } : {}),
-      ...(newStatus === "COMPLETED" ? { endTime: new Date() } : {}),
-    },
-    include: TRIP_INCLUDE,
-  });
-
-  return updated;
 };
