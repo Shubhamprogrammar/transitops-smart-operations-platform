@@ -1,10 +1,11 @@
+import { GeneralSettingsForm } from "@/modules/settings/components/general-settings-form";
+import { RbacMatrix } from "@/modules/settings/components/rbac-matrix";
+
 export default function SettingsPage() {
   return (
-    <div className="rounded-md border border-[#262626] bg-[#111827] p-6">
-      <h1 className="text-lg font-semibold text-white">Settings</h1>
-      <p className="mt-2 text-sm text-[#9ca3af]">
-        Application settings coming soon.
-      </p>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <GeneralSettingsForm />
+      <RbacMatrix />
     </div>
   );
 }

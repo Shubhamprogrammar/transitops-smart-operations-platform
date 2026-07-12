@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { protect, authorize } from "../middleware/auth";
+import { protect } from "../middleware/auth";
+import { authorize } from "../middleware/rbac";
 import {
   create,
   getAll,
@@ -11,7 +12,7 @@ import {
 export const expenseRouter = Router();
 
 expenseRouter.post("/", protect, authorize(["FLEET_MANAGER"]), create);
-expenseRouter.get("/", protect, getAll);
-expenseRouter.get("/:id", protect, getById);
+expenseRouter.get("/", protect, authorize(["FLEET_MANAGER", "SAFETY_OFFICER", "ANALYST"]), getAll);
+expenseRouter.get("/:id", protect, authorize(["FLEET_MANAGER", "SAFETY_OFFICER", "ANALYST"]), getById);
 expenseRouter.patch("/:id", protect, authorize(["FLEET_MANAGER"]), update);
 expenseRouter.delete("/:id", protect, authorize(["FLEET_MANAGER"]), remove);

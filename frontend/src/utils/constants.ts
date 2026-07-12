@@ -15,4 +15,8 @@ export const QUERY_KEYS = {
   FLEET: ["fleet"],
   TRIPS: ["trips"],
   DRIVERS: ["drivers"],
+  MAINTENANCE: ["maintenance"],
+  FUEL_LOGS: ["fuel-logs"],
+  OTHER_EXPENSES: ["other-expenses"],
+  ANALYTICS: ["analytics"],
 } as const;

@@ -1,62 +1,38 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    email?: string;
-    role?: string;
-  };
+interface JwtPayload {
+  id: number;
+  role: string;
 }
 
 export const protect = (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): void => {
-  const header = req.header("Authorization");
+  const header = req.headers.authorization;
+  const cookieToken = req.cookies?.token;
 
-  if (!header?.startsWith("Bearer ")) {
-    res.status(401).json({ success: false, message: "Missing bearer token" });
+  let token: string | undefined;
+
+  if (header?.startsWith("Bearer ")) {
+    token = header.slice(7);
+  } else if (cookieToken) {
+    token = cookieToken;
+  }
+
+  if (!token) {
+    res.status(401).json({ message: "Not authenticated. Please log in." });
     return;
   }
 
-  const token = header.slice("Bearer ".length);
-
   try {
-    const payload = jwt.verify(token, env.jwtSecret) as {
-      userId: string;
-      email?: string;
-      role?: string;
-    };
-
-    req.user = payload;
+    const decoded = jwt.verify(token, env.jwtSecret) as JwtPayload;
+    req.user = { id: decoded.id, role: decoded.role };
     next();
   } catch {
-    res.status(401).json({ success: false, message: "Invalid or expired token" });
+    res.status(401).json({ message: "Invalid or expired token." });
   }
 };
-
-export const authorize = (allowedRoles: string[]) => {
-  return (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): void => {
-    const userRole = req.user?.role;
-
-    if (!userRole || !allowedRoles.includes(userRole)) {
-      res.status(403).json({
-        success: false,
-        message: "Forbidden: insufficient permissions",
-      });
-      return;
-    }
-
-    next();
-  };
-};
-
-// Alias for backward compatibility
-export { protect as requireAuth };

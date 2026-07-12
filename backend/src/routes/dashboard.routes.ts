@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { protect, authorize } from "../middleware/auth";
+import { protect } from "../middleware/auth";
+import { authorize } from "../middleware/rbac";
 import {
   getSummary,
   getVehicleStatus,
@@ -10,8 +11,8 @@ import {
 
 export const dashboardRouter = Router();
 
-dashboardRouter.get("/summary", protect, getSummary);
-dashboardRouter.get("/vehicle-status", protect, getVehicleStatus);
-dashboardRouter.get("/trip-status", protect, getTripStatus);
-dashboardRouter.get("/expenses", protect, getExpenses);
-dashboardRouter.get("/fuel", protect, getFuel);
+dashboardRouter.get("/summary", protect, authorize(["FLEET_MANAGER", "SAFETY_OFFICER", "ANALYST"]), getSummary);
+dashboardRouter.get("/vehicle-status", protect, authorize(["FLEET_MANAGER", "SAFETY_OFFICER", "ANALYST"]), getVehicleStatus);
+dashboardRouter.get("/trip-status", protect, authorize(["FLEET_MANAGER", "SAFETY_OFFICER", "ANALYST"]), getTripStatus);
+dashboardRouter.get("/expenses", protect, authorize(["FLEET_MANAGER", "SAFETY_OFFICER", "ANALYST"]), getExpenses);
+dashboardRouter.get("/fuel", protect, authorize(["FLEET_MANAGER", "SAFETY_OFFICER", "ANALYST"]), getFuel);

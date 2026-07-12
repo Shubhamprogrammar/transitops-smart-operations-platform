@@ -1,10 +1,20 @@
+"use client";
+
+import { CreateTripForm } from "@/modules/trips/components/create-trip-form";
+import { LiveBoard } from "@/modules/trips/components/live-board";
+import { TripLifecycle } from "@/modules/trips/components/trip-lifecycle";
+import { useTrips } from "@/modules/trips/hooks/useTrips";
+
 export default function TripsPage() {
+  const { data: trips = [], isLoading } = useTrips();
+
   return (
-    <div className="rounded-md border border-[#262626] bg-[#111827] p-6">
-      <h1 className="text-lg font-semibold text-white">Trips</h1>
-      <p className="mt-2 text-sm text-[#9ca3af]">
-        Trip management coming soon.
-      </p>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div>
+        <TripLifecycle />
+        <CreateTripForm />
+      </div>
+      <LiveBoard trips={trips} isLoading={isLoading} />
     </div>
   );
 }

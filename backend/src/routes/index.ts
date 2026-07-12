@@ -6,7 +6,8 @@ import { maintenanceRouter } from "./maintenance.routes";
 import { fuelLogRouter } from "./fuelLog.routes";
 import { expenseRouter } from "./expense.routes";
 import { dashboardRouter } from "./dashboard.routes";
-import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
+import { tripRouter } from "./trip.routes";
+import { protect } from "../middleware/auth";
 
 export const router = Router();
 
@@ -15,10 +16,10 @@ router.get("/health", (_req, res) => {
 });
 
 router.use("/auth", authRouter);
+router.use("/trips", tripRouter);
 
-router.get("/me", requireAuth, (req, res) => {
-  const authReq = req as AuthenticatedRequest;
-  res.json({ user: authReq.user ?? null });
+router.get("/me", protect, (req, res) => {
+  res.json({ user: req.user ?? null });
 });
 
 router.use("/vehicles", vehicleRouter);
