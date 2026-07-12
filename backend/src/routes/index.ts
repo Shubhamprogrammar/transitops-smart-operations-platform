@@ -1,5 +1,11 @@
 import { Router } from "express";
 import { authRouter } from "./auth.routes";
+import { vehicleRouter } from "./vehicle.routes";
+import { driverRouter } from "./driver.routes";
+import { maintenanceRouter } from "./maintenance.routes";
+import { fuelLogRouter } from "./fuelLog.routes";
+import { expenseRouter } from "./expense.routes";
+import { dashboardRouter } from "./dashboard.routes";
 import { tripRouter } from "./trip.routes";
 import { protect } from "../middleware/auth";
 
@@ -15,3 +21,10 @@ router.use("/trips", tripRouter);
 router.get("/me", protect, (req, res) => {
   res.json({ user: req.user ?? null });
 });
+
+router.use("/vehicles", vehicleRouter);
+router.use("/drivers", driverRouter);
+router.use("/maintenance", maintenanceRouter);
+router.use("/fuel-logs", fuelLogRouter);
+router.use("/expenses", expenseRouter);
+router.use("/dashboard", dashboardRouter);
