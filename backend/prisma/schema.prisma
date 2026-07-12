@@ -9,7 +9,6 @@ datasource db {
 
 enum Role {
   FLEET_MANAGER
-  DRIVER
   SAFETY_OFFICER
   ANALYST
 }
@@ -76,6 +75,8 @@ model Vehicle {
 
 model Driver {
   id            Int          @id @default(autoincrement())
+  email         String       @unique
+  password      String
   name          String
   phone         String
   licenseNumber String       @unique
