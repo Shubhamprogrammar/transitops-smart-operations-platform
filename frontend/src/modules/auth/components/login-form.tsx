@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useLogin } from "../hooks/useLogin";
 
 const ROLES = [
   { value: "fleet-manager", label: "Fleet Manager" },
@@ -19,29 +20,28 @@ const ROLE_ACCESS: Record<string, string> = {
 
 export function LoginForm() {
   const router = useRouter();
+  const { mutateAsync, isPending } = useLogin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("dispatcher");
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
 
-    // Simulate network delay.
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    // Demo: type "wrong" as the password to trigger the error state.
-    if (password.toLowerCase() === "wrong") {
-      setError("Invalid credentials.\nAccount locked after 5 failed attempts.");
-      setIsLoading(false);
-      return;
+    try {
+      await mutateAsync({ email, password, role });
+      if (rememberMe) {
+        // TODO: persist remember-me preference if needed.
+      }
+      router.push("/dashboard");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+      setError(message);
     }
-
-    router.push("/dashboard");
   };
 
   return (
@@ -184,10 +184,10 @@ export function LoginForm() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isPending}
               className="mt-2 w-full rounded-md bg-[#b45309] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#92400e] focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:ring-offset-2 focus:ring-offset-[#0a0a0a] disabled:opacity-60"
             >
-              {isLoading ? "Signing in…" : "Sign In"}
+              {isPending ? "Signing in…" : "Sign In"}
             </button>
           </form>
 

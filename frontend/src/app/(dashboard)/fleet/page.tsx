@@ -1,67 +1,26 @@
 "use client";
 
+import { useFleet } from "@/modules/fleet/hooks/useFleet";
 import { useMemo, useState } from "react";
-
-const VEHICLES = [
-  {
-    regNo: "GJ01AB1234",
-    makeModel: "VAN-05",
-    type: "Van",
-    capacity: "500 kg",
-    odometer: "94,000",
-    avgCost: "₹ 20,000",
-    status: "Available",
-    statusColor: "bg-[#22c55e]",
-  },
-  {
-    regNo: "GJ01AB9992",
-    makeModel: "TRUCK-01",
-    type: "Truck",
-    capacity: "5 Ton",
-    odometer: "1,92,000",
-    avgCost: "₹ 4,50,000",
-    status: "On Trip",
-    statusColor: "bg-[#3b82f6]",
-  },
-  {
-    regNo: "GJ01AB8210",
-    makeModel: "MINI-03",
-    type: "Mini",
-    capacity: "1 Ton",
-    odometer: "66,000",
-    avgCost: "₹ 40,000",
-    status: "In Stop",
-    statusColor: "bg-[#f97316]",
-  },
-  {
-    regNo: "GJ01AB0012",
-    makeModel: "VAN-09",
-    type: "Van",
-    capacity: "750 kg",
-    odometer: "2,41,900",
-    avgCost: "₹ 5,90,000",
-    status: "Retired",
-    statusColor: "bg-[#f87171]",
-  },
-];
 
 const TYPES = ["All", "Van", "Truck", "Mini"];
 const STATUSES = ["All", "Available", "On Trip", "In Stop", "Retired"];
 
 export default function FleetPage() {
+  const { data: vehicles = [], isLoading, error } = useFleet();
   const [type, setType] = useState("All");
   const [status, setStatus] = useState("All");
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
-    return VEHICLES.filter((v) => {
+    return vehicles.filter((v) => {
       const matchesType = type === "All" || v.type === type;
       const matchesStatus = status === "All" || v.status === status;
       const matchesSearch =
         search === "" || v.regNo.toLowerCase().includes(search.toLowerCase());
       return matchesType && matchesStatus && matchesSearch;
     });
-  }, [type, status, search]);
+  }, [vehicles, type, status, search]);
 
   return (
     <div className="space-y-4">
@@ -109,24 +68,46 @@ export default function FleetPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#262626]">
-              {filtered.map((v) => (
-                <tr key={v.regNo} className="text-[#d1d5db]">
-                  <td className="px-4 py-3 font-medium text-white">{v.regNo}</td>
-                  <td className="px-4 py-3">{v.makeModel}</td>
-                  <td className="px-4 py-3">{v.type}</td>
-                  <td className="px-4 py-3">{v.capacity}</td>
-                  <td className="px-4 py-3">{v.odometer}</td>
-                  <td className="px-4 py-3">{v.avgCost}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-block rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white ${v.statusColor}`}
-                    >
-                      {v.status}
-                    </span>
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-4 py-6 text-center text-[#9ca3af]"
+                  >
+                    Loading vehicles…
                   </td>
                 </tr>
-              ))}
-              {filtered.length === 0 && (
+              ) : error ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-4 py-6 text-center text-[#ef4444]"
+                  >
+                    Failed to load vehicles.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((v) => (
+                  <tr key={v.regNo} className="text-[#d1d5db]">
+                    <td className="px-4 py-3 font-medium text-white">
+                      {v.regNo}
+                    </td>
+                    <td className="px-4 py-3">{v.makeModel}</td>
+                    <td className="px-4 py-3">{v.type}</td>
+                    <td className="px-4 py-3">{v.capacity}</td>
+                    <td className="px-4 py-3">{v.odometer}</td>
+                    <td className="px-4 py-3">{v.avgCost}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-block rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white ${v.statusColor}`}
+                      >
+                        {v.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+              {!isLoading && !error && filtered.length === 0 && (
                 <tr>
                   <td
                     colSpan={7}
