@@ -1,10 +1,21 @@
+"use client";
+
+import { CostSummary } from "@/modules/fuel-expenses/components/cost-summary";
+import { FuelLogTable } from "@/modules/fuel-expenses/components/fuel-log-table";
+import { OtherExpensesTable } from "@/modules/fuel-expenses/components/other-expenses-table";
+import { useFuelExpenses } from "@/modules/fuel-expenses/hooks/useFuelExpenses";
+
 export default function FuelExpensesPage() {
+  const { fuelLogs, otherExpenses, totalOperationalCost } = useFuelExpenses();
+
   return (
-    <div className="rounded-md border border-[#262626] bg-[#111827] p-6">
-      <h1 className="text-lg font-semibold text-white">Fuel & Expenses</h1>
-      <p className="mt-2 text-sm text-[#9ca3af]">
-        Fuel and expense tracking coming soon.
-      </p>
+    <div className="space-y-6">
+      <FuelLogTable logs={fuelLogs.data ?? []} isLoading={fuelLogs.isLoading} />
+      <OtherExpensesTable
+        expenses={otherExpenses.data ?? []}
+        isLoading={otherExpenses.isLoading}
+      />
+      <CostSummary total={totalOperationalCost} />
     </div>
   );
 }

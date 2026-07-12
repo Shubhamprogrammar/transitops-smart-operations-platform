@@ -1,9 +1,23 @@
+"use client";
+
+import { ServiceRecordForm } from "@/modules/maintenance/components/service-record-form";
+import { ServiceLogTable } from "@/modules/maintenance/components/service-log-table";
+import { StatusFlow } from "@/modules/maintenance/components/status-flow";
+import { useMaintenance } from "@/modules/maintenance/hooks/useMaintenance";
+
 export default function MaintenancePage() {
+  const { data: records = [], isLoading } = useMaintenance();
+
   return (
-    <div className="rounded-md border border-[#262626] bg-[#111827] p-6">
-      <h1 className="text-lg font-semibold text-white">Maintenance</h1>
-      <p className="mt-2 text-sm text-[#9ca3af]">
-        Maintenance schedules coming soon.
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div>
+        <ServiceRecordForm />
+        <StatusFlow />
+      </div>
+      <ServiceLogTable records={records} isLoading={isLoading} />
+
+      <p className="col-span-full text-[11px] text-[#f97316]">
+        Note: In Shop vehicles are removed from the dispatch pool.
       </p>
     </div>
   );
