@@ -42,6 +42,8 @@ enum ExpenseType {
 }
 
 enum TripStatus {
+  DRAFT
+  DISPATCHED
   ACTIVE
   COMPLETED
   CANCELLED
@@ -86,15 +88,23 @@ model Driver {
 }
 
 model Trip {
-  id        Int        @id @default(autoincrement())
-  vehicleId Int
-  driverId  Int?
-  status    TripStatus @default(ACTIVE)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id           Int        @id @default(autoincrement())
+  vehicleId    Int
+  driverId     Int        // ❗ make required
+
+  cargoWeight  Int        // ❗ YOU NEED THIS
+  distance     Int?       // optional
+
+  status       TripStatus @default(DRAFT) // ❗ fix default
+
+  startTime    DateTime?
+  endTime      DateTime?
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   vehicle  Vehicle   @relation(fields: [vehicleId], references: [id])
-  driver   Driver?   @relation(fields: [driverId], references: [id])
+  driver   Driver    @relation(fields: [driverId], references: [id])
   fuelLogs FuelLog[]
   expenses Expense[]
 }
