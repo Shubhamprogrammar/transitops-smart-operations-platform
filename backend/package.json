@@ -7,9 +7,9 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "prisma:generate": "npx dotenv-cli npx prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:generate": "npx dotenv -- prisma generate",
+    "prisma:migrate": "npx dotenv -- prisma migrate dev",
+    "prisma:studio": "npx dotenv -- prisma studio"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +32,7 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.2.0",
+    "dotenv-cli": "^11.0.0",
     "prisma": "^6.13.0",
     "tsx": "^4.20.3",
     "typescript": "^5.9.2"

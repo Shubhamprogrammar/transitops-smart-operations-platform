@@ -3,11 +3,13 @@ import type { OtherExpense } from "@/types/fuel-expenses";
 interface OtherExpensesTableProps {
   expenses: OtherExpense[];
   isLoading: boolean;
+  onAddExpense?: () => void;
 }
 
 export function OtherExpensesTable({
   expenses,
   isLoading,
+  onAddExpense,
 }: OtherExpensesTableProps) {
   return (
     <div>
@@ -15,7 +17,10 @@ export function OtherExpensesTable({
         <h3 className="text-xs font-semibold uppercase tracking-wide text-[#9ca3af]">
           Other Expenses (Toll / Misc)
         </h3>
-        <button className="rounded-md bg-[#b45309] px-3 py-1 text-[10px] font-semibold text-white transition hover:bg-[#92400e]">
+        <button
+          onClick={onAddExpense}
+          className="rounded-md bg-[#b45309] px-3 py-1 text-[10px] font-semibold text-white transition hover:bg-[#92400e]"
+        >
           + Add Expense
         </button>
       </div>

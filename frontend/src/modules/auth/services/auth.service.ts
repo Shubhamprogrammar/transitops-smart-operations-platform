@@ -1,29 +1,47 @@
+import { apiClient } from "@/services/axios";
 import { tokenStore } from "@/services/tokenStore";
-import type { LoginPayload, LoginResponse } from "@/types/api";
+import type { ApiResponse, LoginPayload, LoginResponse, RegisterPayload, RegisterResponse } from "@/types/api";
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
-  // TODO: Replace with real API call once backend is ready.
-  // const { data } = await apiClient.post<ApiResponse<LoginResponse>>("/auth/login", payload);
-  // tokenStore.setToken(data.data.token);
-  // return data.data;
+  const { data } = await apiClient.post<LoginResponse>("/auth/login", payload);
 
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
-  // Demo error state for the design.
-  if (payload.password.toLowerCase() === "wrong") {
-    throw new Error("Invalid credentials. Account locked after 5 failed attempts.");
-  }
-
+  // Backend returns { message, token, user: { id: number, email, role } }
+  // Frontend expects { token, user: { id: string, email, role, name } }
   const response: LoginResponse = {
-    token: "demo-token",
+    token: data.token,
     user: {
-      id: "1",
-      email: payload.email,
-      role: payload.role,
-      name: "Ravija K.",
+      id: String(data.user.id),
+      email: data.user.email,
+      role: data.user.role,
+      name: data.user.email.split("@")[0] || "User",
     },
   };
 
   tokenStore.setToken(response.token);
   return response;
+}
+
+export async function register(payload: RegisterPayload): Promise<RegisterResponse> {
+  const { data } = await apiClient.post<RegisterResponse>("/auth/register", payload);
+
+  const response: RegisterResponse = {
+    message: data.message,
+    token: data.token,
+    user: {
+      id: String(data.user.id),
+      email: data.user.email,
+      role: data.user.role,
+      name: data.user.email.split("@")[0] || "User",
+    },
+  };
+
+  tokenStore.setToken(response.token);
+  return response;
+}
+
+export async function getCurrentUser() {
+  const { data } = await apiClient.get<{ user: { id: number; email: string; role: string } }>(
+    "/me",
+  );
+  return data.user;
 }

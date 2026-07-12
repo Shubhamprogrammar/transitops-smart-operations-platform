@@ -28,6 +28,8 @@ export const ExpenseTypeEnum = z.enum([
 ]);
 
 export const TripStatusEnum = z.enum([
+  "DRAFT",
+  "DISPATCHED",
   "ACTIVE",
   "COMPLETED",
   "CANCELLED",

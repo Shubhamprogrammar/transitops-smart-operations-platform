@@ -26,3 +26,20 @@ export interface LoginResponse {
     name: string;
   };
 }
+
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  role: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    name: string;
+  };
+}

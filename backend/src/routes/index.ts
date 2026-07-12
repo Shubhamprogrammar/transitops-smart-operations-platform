@@ -7,6 +7,7 @@ import { fuelLogRouter } from "./fuelLog.routes";
 import { expenseRouter } from "./expense.routes";
 import { dashboardRouter } from "./dashboard.routes";
 import { tripRouter } from "./trip.routes";
+import { analyticsRouter } from "./analytics.routes";
 import { protect } from "../middleware/auth";
 
 export const router = Router();
@@ -28,3 +29,4 @@ router.use("/maintenance", maintenanceRouter);
 router.use("/fuel-logs", fuelLogRouter);
 router.use("/expenses", expenseRouter);
 router.use("/dashboard", dashboardRouter);
+router.use("/analytics", analyticsRouter);

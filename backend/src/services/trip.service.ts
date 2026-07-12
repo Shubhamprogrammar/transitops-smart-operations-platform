@@ -1,5 +1,17 @@
 import { prisma } from "../config/prisma";
-import { CreateTripInput } from "../validators/trip.validator";
+import { AppError } from "../helpers/errors";
+import {
+  CreateTripInput,
+  UpdateTripStatusInput,
+} from "../validators/trip.validator";
+import type { TripStatus } from "@prisma/client";
+
+const TRIP_INCLUDE = {
+  vehicle: true,
+  driver: true,
+  fuelLogs: true,
+  expenses: true,
+} as const;
 
 // ─── Create Trip ────────────────────────────────────────────────────────
 
@@ -9,7 +21,7 @@ export const createTrip = async (data: CreateTripInput) => {
   });
 
   if (!vehicle) {
-    throw new Error("Vehicle not found");
+    throw new AppError("Vehicle not found", 404);
   }
 
   const driver = await prisma.driver.findUnique({
@@ -17,15 +29,15 @@ export const createTrip = async (data: CreateTripInput) => {
   });
 
   if (!driver) {
-    throw new Error("Driver not found");
+    throw new AppError("Driver not found", 404);
   }
 
   if (vehicle.status !== "AVAILABLE") {
-    throw new Error("Vehicle not available");
+    throw new AppError("Vehicle not available", 400);
   }
 
   if (driver.status !== "AVAILABLE") {
-    throw new Error("Driver not available");
+    throw new AppError("Driver not available", 400);
   }
 
   if (new Date(driver.licenseExpiry) < new Date()) {
@@ -33,17 +45,31 @@ export const createTrip = async (data: CreateTripInput) => {
   }
 
   if (data.cargoWeight > vehicle.capacity) {
-    throw new Error("Cargo exceeds vehicle capacity");
+    throw new AppError("Cargo exceeds vehicle capacity", 400);
   }
 
   const trip = await prisma.trip.create({
     data: {
       vehicleId: data.vehicleId,
       driverId: data.driverId,
+      source: data.source,
+      destination: data.destination,
       cargoWeight: data.cargoWeight,
-      distance: data.distance,
+      distance: data.distance ?? undefined,
       status: "DRAFT",
     },
+    include: TRIP_INCLUDE,
+  });
+
+  // Update vehicle and driver status to ON_TRIP
+  await prisma.vehicle.update({
+    where: { id: data.vehicleId },
+    data: { status: "ON_TRIP" },
+  });
+
+  await prisma.driver.update({
+    where: { id: data.driverId },
+    data: { status: "ON_TRIP" },
   });
 
   return trip;

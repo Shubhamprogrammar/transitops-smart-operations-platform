@@ -1,4 +1,4 @@
-export type TripStatus = "Draft" | "Dispatched" | "Completed" | "Cancelled";
+export type TripStatus = "Draft" | "Dispatched" | "Active" | "Completed" | "Cancelled";
 
 export interface Trip {
   id: string;
