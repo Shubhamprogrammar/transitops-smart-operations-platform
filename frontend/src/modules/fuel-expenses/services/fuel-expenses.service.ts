@@ -1,60 +1,20 @@
 import type { FuelLog, OtherExpense } from "@/types/fuel-expenses";
+import { FUEL_LOGS, OTHER_EXPENSES } from "../constants/data";
 
 export async function fetchFuelLogs(): Promise<FuelLog[]> {
-  // TODO: replace with real API call
-  await new Promise((resolve) => setTimeout(resolve, 400));
+  // TODO: Replace with real API call once backend is ready.
+  // const { data } = await apiClient.get<ApiResponse<FuelLog[]>>("/fuel-logs");
+  // return data.data;
 
-  return [
-    {
-      id: "F001",
-      vehicle: "VAN-05",
-      date: "05 Jul 2026",
-      liters: "42 L",
-      fuelCost: 3150,
-    },
-    {
-      id: "F002",
-      vehicle: "TRUCK-01",
-      date: "06 Jul 2026",
-      liters: "110 L",
-      fuelCost: 8400,
-    },
-    {
-      id: "F003",
-      vehicle: "MINI-03",
-      date: "06 Jul 2026",
-      liters: "28 L",
-      fuelCost: 2050,
-    },
-  ];
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  return FUEL_LOGS;
 }
 
 export async function fetchOtherExpenses(): Promise<OtherExpense[]> {
-  // TODO: replace with real API call
-  await new Promise((resolve) => setTimeout(resolve, 400));
+  // TODO: Replace with real API call once backend is ready.
+  // const { data } = await apiClient.get<ApiResponse<OtherExpense[]>>("/other-expenses");
+  // return data.data;
 
-  return [
-    {
-      id: "E001",
-      trip: "TR001",
-      vehicle: "VAN-05",
-      toll: 120,
-      other: 0,
-      maintenanceLinked: 0,
-      total: 120,
-      status: "Available",
-      statusColor: "bg-[#22c55e]",
-    },
-    {
-      id: "E002",
-      trip: "TR002",
-      vehicle: "TRK-02",
-      toll: 340,
-      other: 150,
-      maintenanceLinked: 15000,
-      total: 15490,
-      status: "Completed",
-      statusColor: "bg-[#22c55e]",
-    },
-  ];
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  return OTHER_EXPENSES;
 }

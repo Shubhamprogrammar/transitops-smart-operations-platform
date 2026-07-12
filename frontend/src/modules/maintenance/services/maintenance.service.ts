@@ -1,48 +1,29 @@
-import type { CreateServiceRecordPayload, ServiceRecord } from "@/types/maintenance";
+import type {
+  CreateServiceRecordPayload,
+  ServiceRecord,
+} from "@/types/maintenance";
+import { SERVICE_RECORDS } from "../constants/data";
 
 export async function fetchServiceRecords(): Promise<ServiceRecord[]> {
-  // TODO: replace with real API call
-  await new Promise((resolve) => setTimeout(resolve, 400));
+  // TODO: Replace with real API call once backend is ready.
+  // const { data } = await apiClient.get<ApiResponse<ServiceRecord[]>>("/maintenance");
+  // return data.data;
 
-  return [
-    {
-      id: "S001",
-      vehicle: "VAN-05",
-      serviceType: "Oil Change",
-      cost: 2500,
-      date: "2026-07-10",
-      status: "In Shop",
-      statusColor: "bg-[#f97316]",
-    },
-    {
-      id: "S002",
-      vehicle: "TRUCK-01",
-      serviceType: "Engine Repair",
-      cost: 15000,
-      date: "2026-07-08",
-      status: "Completed",
-      statusColor: "bg-[#22c55e]",
-    },
-    {
-      id: "S003",
-      vehicle: "MINI-03",
-      serviceType: "Tyre Replace",
-      cost: 6200,
-      date: "2026-07-06",
-      status: "In Shop",
-      statusColor: "bg-[#f97316]",
-    },
-  ];
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  return SERVICE_RECORDS;
 }
 
 export async function createServiceRecord(
   payload: CreateServiceRecordPayload
 ): Promise<ServiceRecord> {
-  // TODO: replace with real API call
+  // TODO: Replace with real API call once backend is ready.
+  // const { data } = await apiClient.post<ApiResponse<ServiceRecord>>("/maintenance", payload);
+  // return data.data;
+
   await new Promise((resolve) => setTimeout(resolve, 400));
 
-  return {
-    id: `S${Math.floor(Math.random() * 1000)}`,
+  const newRecord: ServiceRecord = {
+    id: `S${String(SERVICE_RECORDS.length + 1).padStart(3, "0")}`,
     vehicle: payload.vehicle,
     serviceType: payload.serviceType,
     cost: payload.cost,
@@ -55,4 +36,7 @@ export async function createServiceRecord(
         ? "bg-[#f97316]"
         : "bg-[#6b7280]",
   };
+
+  SERVICE_RECORDS.push(newRecord);
+  return newRecord;
 }
